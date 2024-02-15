@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        h1 {text-align: center;}
+        label{
+            float: left;
+            clear: left;
+            width: 109px;
+            text-align: right;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        input {
+          float: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pick Calculator</h1>
+    <div id="inputs">
+        <label for="lists">Pick Lists:</label>
+        <input type="number" id="lists" name="lists" oninput="calculateTime()"><br>
+
+        <label for="pickers">Active Pickers:</label>
+        <input type="number" id="pickers" name="pickers" oninput="calculateTime()"><br>
+
+        <label for="pickDuration">Picklist Duration</label>
+        <input type="number" id="listTime" name="pickDuration" oninput="calculateTime()"><br>
+
+        <label for="endTime">End Time Goal</label>
+        <input type="time" id="endTime" name="endTime" value="11:10" oninput="calculateTime()"><br><br><br>
+    </div>
+
+    <div id="outputs">
+        <p id="cartsPerPerson">Carts Per Person:</p>
+        <p id="mintuesToEnd">Pick Time Left:</p>
+        <p id="estimatedEndTime">Estimated End Time:</p>
+        <p id="minutesToGoalEnd">Minutes To Goal Time:</p>
+        <p id="peopleNeeded">Minimum Pickers Required:</p>
+        <p id="manMinutes">Man Minutes Of Work:</p>
+    </div>
+</body>
+<script>
+    // Main function to calculate time
+    function calculateTime() {
+        let pickLists = document.getElementById("lists").value;
+        let activePickers = document.getElementById("pickers").value;
+        let pickDuration = document.getElementById("listTime").value;
+        
+        let cartsPerPerson = Math.ceil(pickLists / activePickers);
+        let timeLeft = Math.ceil((pickLists / activePickers) * pickDuration);
+        grabTime(pickLists, pickDuration, timeLeft);
+
+        document.getElementById("mintuesToEnd").innerHTML = "Pick Time Left: " + timeLeft;
+        document.getElementById("cartsPerPerson").innerHTML = "Carts Per Person: " + cartsPerPerson;
+    }
+
+    // Grabs current time
+    function grabTime(pl, pd, tl) {
+        let now = new Date();
+        let [hours, mins] = document.getElementById("endTime").value.split(":");
+        let minutesToEnd = (hours * 60 + mins * 1) - (now.getHours() * 60 + now.getMinutes() * 1);
+        document.getElementById("minutesToGoalEnd").innerHTML = "Minutes To Goal Time: " + minutesToEnd;
+        let manMinutes = pl * pd;
+        document.getElementById("manMinutes").innerHTML = "Man Minutes Of Work: " + manMinutes;
+        let peopleNeeded = Math.ceil(manMinutes / minutesToEnd);
+        document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: " + peopleNeeded;
+        let estEndTime = new Date();
+        estEndTime.setMinutes(now.getMinutes() + tl);
+        estEndTime = new Date(estEndTime);
+        document.getElementById("estimatedEndTime").innerHTML = "Estimated End Time: " + hours12(estEndTime) + ":" + pad(estEndTime.getMinutes());
+    }
+
+    function hours12(date) { 
+        let hr12 = (date.getHours() + 24) % 12 || 12; 
+        return pad(hr12);
+    }
+
+    function pad(n) {
+        return (n < 10) ? '0' + n : n;
+    }
+
+    // Made by Nicholas Hatchew (nhatchew). Last Updated 02/12/2024
+    // Work in progress system to refine pick and stage VTO calculations and Estimated time left
+    
+</script>
+</html>
