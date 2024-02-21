@@ -3,41 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Pick Calculator</title>
     <style>
         h1 {text-align: center;}
-        label{
-            float: left;
-            clear: left;
-            width: 109px;
-            text-align: right;
-            margin-right: 10px;
-            margin-bottom: 10px;
+
+        .inputs {
+            display: flex;
         }
-        input {
-          float: left;
+
+        .labels {
+            display: flex;
+            width: 122px;
+            flex-direction: column;
+        }
+
+        .labels > p {
+            margin: 4px;
+            text-align: right;
+        }
+       
+        .inputBoxes > input {
+            margin: 2px;
+        }
+
+        .inputBoxes {
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+        }
+ 
+        #inputBoxes > #flexBool {
+            margin-top: 7px;
+        }
+
+        #flexSettings {
+            margin-top: 10px;
+        }
+
+        #timeUpdated {
+            color: rgb(83, 88, 109);
+            font-size: 15px;
         }
     </style>
 </head>
 <body>
     <h1>Pick Calculator</h1>
     <div id="inputs">
-        <label for="lists">Pick Lists:</label>
-        <input type="number" id="lists" name="lists" oninput="calculateTime()"><br>
-
-        <label for="pickers">Active Pickers:</label>
-        <input type="number" id="pickers" name="pickers" oninput="calculateTime()"><br>
-
-        <label for="pickDuration">Picklist Duration</label>
-        <input type="number" id="listTime" name="pickDuration" oninput="calculateTime()"><br>
-
-        <label for="endTime">End Time Goal</label>
-        <input type="time" id="endTime" name="endTime" value="11:10" oninput="calculateTime()"><br><br><br>
+        <p id="timeUpdated">10:10AM</p>
+    </div>
+    <div id="inputs" class="inputs">
+        <div id="labels" class="labels">
+            <p>Pick Lists:</p>
+            <p>Active Pickers:</p>
+            <p>Picklist Duration:</p>
+            <p>Goal End Time:</p>
+            <p>Flex?</p>
+        </div>
+        <div id="inputBoxes" class="inputBoxes">
+            <input type="number" id="lists" name="lists" oninput="calculateTime()">
+            <input type="number" id="pickers" name="pickers" oninput="calculateTime()">
+            <input type="number" id="listTime" name="pickDuration" oninput="calculateTime()">
+            <input type="time" id="endTime" name="endTime" value="11:10" oninput="calculateTime()">
+            <input type="checkbox" id="flexBool" name="flexBool" value="false" oninput="flex()">
+        </div>
+    </div>
+    <div id="flexSettings" class="inputs">
+        <div id="flexLabels" class="labels">
+            <p>Pick Lists:</p>
+            <p>Picklist Duration:</p>
+        </div>
+        <div id="flexInputs" class="inputBoxes">
+            <input type="number" id="lists" name="lists" oninput="calculateTime()">
+            <input type="number" id="listTime" name="pickDuration" oninput="calculateTime()">
+        </div>
     </div>
 
     <div id="outputs">
         <p id="cartsPerPerson">Carts Per Person:</p>
-        <p id="mintuesToEnd">Pick Time Left:</p>
+        <p id="mintuesToEnd">Pick Minutes Left:</p>
         <p id="minutesToGoalEnd">Minutes To Goal Time:</p>
         <p id="estimatedEndTime">Estimated End Time:</p>
         <p id="peopleNeeded">Minimum Pickers Required:</p>
@@ -53,26 +96,35 @@
         
         let cartsPerPerson = Math.ceil(pickLists / activePickers);
         let timeLeft = Math.ceil((pickLists / activePickers) * pickDuration);
-        grabTime(pickLists, pickDuration, timeLeft);
+        grabTime(pickLists, pickDuration, timeLeft, activePickers);
 
-        document.getElementById("mintuesToEnd").innerHTML = "Pick Time Left: " + timeLeft;
+        if(activePickers < 1) { return };
+        document.getElementById("mintuesToEnd").innerHTML = "Pick Minutes Left: " + timeLeft;
         document.getElementById("cartsPerPerson").innerHTML = "Carts Per Person: " + cartsPerPerson;
     }
 
     // Grabs current time
-    function grabTime(pl, pd, tl) {
+    function grabTime(pl, pd, tl, ap) {
         let now = new Date();
         let [hours, mins] = document.getElementById("endTime").value.split(":");
         let minutesToEnd = (hours * 60 + mins * 1) - (now.getHours() * 60 + now.getMinutes() * 1);
-        document.getElementById("minutesToGoalEnd").innerHTML = "Minutes To Goal Time: " + minutesToEnd;
+        if(minutesToEnd < 1) {
+            document.getElementById("minutesToGoalEnd").innerHTML = "Minutes To Goal Time: " + Math.abs(minutesToEnd) + " Over";
+        } else {
+            document.getElementById("minutesToGoalEnd").innerHTML = "Minutes To Goal Time: " + minutesToEnd;
+        }
         let manMinutes = pl * pd;
         document.getElementById("manMinutes").innerHTML = "Man Minutes Of Work: " + manMinutes;
         let peopleNeeded = Math.ceil(manMinutes / minutesToEnd);
-        document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: " + peopleNeeded;
+        if(peopleNeeded > 100) {document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: >100";} else {
+            document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: " + peopleNeeded;
+        }
         let estEndTime = new Date();
         estEndTime.setMinutes(now.getMinutes() + tl);
         estEndTime = new Date(estEndTime);
+        if(ap < 1) { return };
         document.getElementById("estimatedEndTime").innerHTML = "Estimated End Time: " + hours12(estEndTime) + ":" + pad(estEndTime.getMinutes());
+        document.getElementById("timeUpdated").innerHTML = "Last Updated At " + hours12(now) + ":" + pad(now.getMinutes());
     }
 
     function hours12(date) { 
@@ -83,6 +135,11 @@
     function pad(n) {
         return (n < 10) ? '0' + n : n;
     }
+
+    function flex() {
+    }
+
+    setInterval(calculateTime, 10000);
 
     // Made by Nicholas Hatchew (nhatchew). Last Updated 02/12/2024
     // Work in progress system to refine pick and stage VTO calculations and Estimated time left
