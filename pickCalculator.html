@@ -101,7 +101,6 @@
 <script>
     // Main function to calculate time
     function calculateTime() {
-        console.log("Called");
         //Grabs information from page
         let pickLists = document.getElementById("lists").value;
         let activePickers = document.getElementById("pickers").value;
@@ -114,7 +113,6 @@
         let flexLists;
         let flexDuration;
         if(flex) {
-            console.log("Flex On");
             //Grabs flex specific information
             flexLists = document.getElementById("listsFlex").value;
             flexDuration = document.getElementById("listTimeFlex").value;
@@ -133,7 +131,6 @@
 
     // Grabs current time
     function grabTime(pl, pd, fl, fd, tl, ap, flex) {
-        console.log("Grab Time Called");
         //Calculates time in minutes from now to Goal End Time
         let now = new Date();
         let [hours, mins] = document.getElementById("endTime").value.split(":");
@@ -151,12 +148,10 @@
         } else { 
             manMinutes = (pl * pd);
         }
-        console.log(manMinutes);
         document.getElementById("manMinutes").innerHTML = "Man Minutes Of Work: " + manMinutes;
         
         //Calculates how many people are needed to complete the work on time
         let peopleNeeded = Math.ceil(manMinutes / minutesToEnd);
-        console.log(peopleNeeded);
         //Stops crazy high numbers from being displayed eg. "Minimum Required : 1500"
         if(peopleNeeded > 100) {document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: >100";} else {
             document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: " + peopleNeeded;
