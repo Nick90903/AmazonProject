@@ -13,7 +13,7 @@
 
         .labels {
             display: flex;
-            width: 122px;
+            width: 126px;
             flex-direction: column;
         }
 
@@ -32,12 +32,20 @@
             align-items: start;
         }
  
-        #inputBoxes > #flexBool {
+        #inputBoxes > div > #flexBool {
             margin-top: 7px;
+        }
+
+        #inputBoxes > #flexInput > button {
+            border-radius: 40%;
+            background-color: #56615d;
+            border: none;
+            color: white;
         }
 
         #flexSettings {
             margin-top: 10px;
+            display: flex;
         }
 
         #timeUpdated {
@@ -60,43 +68,63 @@
             <p>Flex?</p>
         </div>
         <div id="inputBoxes" class="inputBoxes">
-            <input type="number" id="lists" name="lists" oninput="calculateTime()">
-            <input type="number" id="pickers" name="pickers" oninput="calculateTime()">
-            <input type="number" id="listTime" name="pickDuration" oninput="calculateTime()">
+            <input type="number" id="lists" name="lists" value="0" oninput="calculateTime()">
+            <input type="number" id="pickers" name="pickers" value="0" oninput="calculateTime()">
+            <input type="number" id="listTime" name="pickDuration" value="10" oninput="calculateTime()">
             <input type="time" id="endTime" name="endTime" value="11:10" oninput="calculateTime()">
-            <input type="checkbox" id="flexBool" name="flexBool" value="false" oninput="flex()">
+            <div id="flexInput">
+                <input type="checkbox" id="flexBool" name="flexBool" value="false" oninput="flex()">
+                <button title="When inputting data for flex, filter routes by 9:50 - 11:25 and use that list value for main 'Pick Lists'. Then filter by the flex dispatch times and use that value for 'Flex Lists'" disabled>?</button>
+            </div>
         </div>
     </div>
     <div id="flexSettings" class="inputs">
         <div id="flexLabels" class="labels">
-            <p>Pick Lists:</p>
-            <p>Picklist Duration:</p>
+            <p>Flex Lists:</p>
+            <p>Flex list Duration:</p>
         </div>
         <div id="flexInputs" class="inputBoxes">
-            <input type="number" id="lists" name="lists" oninput="calculateTime()">
-            <input type="number" id="listTime" name="pickDuration" oninput="calculateTime()">
+            <input type="number" id="listsFlex" name="lists" value="0" oninput="calculateTime()">
+            <input type="number" id="listTimeFlex" name="pickDuration" value="5" oninput="calculateTime()">
         </div>
     </div>
-
+    
     <div id="outputs">
+        <p id="estimatedEndTime">Estimated End Time:</p>
         <p id="cartsPerPerson">Carts Per Person:</p>
+        <p id="peopleNeeded">Minimum Pickers Required:</p>
         <p id="mintuesToEnd">Pick Minutes Left:</p>
         <p id="minutesToGoalEnd">Minutes To Goal Time:</p>
-        <p id="estimatedEndTime">Estimated End Time:</p>
-        <p id="peopleNeeded">Minimum Pickers Required:</p>
         <p id="manMinutes">Man Minutes Of Work:</p>
     </div>
 </body>
 <script>
     // Main function to calculate time
     function calculateTime() {
+        console.log("Called");
+        //Grabs information from page
         let pickLists = document.getElementById("lists").value;
         let activePickers = document.getElementById("pickers").value;
         let pickDuration = document.getElementById("listTime").value;
-        
+
         let cartsPerPerson = Math.ceil(pickLists / activePickers);
         let timeLeft = Math.ceil((pickLists / activePickers) * pickDuration);
-        grabTime(pickLists, pickDuration, timeLeft, activePickers);
+        
+        let flex = document.getElementById("flexBool").checked;
+        let flexLists;
+        let flexDuration;
+        if(flex) {
+            console.log("Flex On");
+            //Grabs flex specific information
+            flexLists = document.getElementById("listsFlex").value;
+            flexDuration = document.getElementById("listTimeFlex").value;
+
+            //Adds flex routes into standard
+            timeLeft += Math.ceil((flexLists / activePickers) * flexDuration);
+            cartsPerPerson += Math.ceil(flexLists/ activePickers);
+        }
+        
+        grabTime(pickLists, pickDuration, flexLists, flexDuration, timeLeft, activePickers, flex);
 
         if(activePickers < 1) { return };
         document.getElementById("mintuesToEnd").innerHTML = "Pick Minutes Left: " + timeLeft;
@@ -104,7 +132,9 @@
     }
 
     // Grabs current time
-    function grabTime(pl, pd, tl, ap) {
+    function grabTime(pl, pd, fl, fd, tl, ap, flex) {
+        console.log("Grab Time Called");
+        //Calculates time in minutes from now to Goal End Time
         let now = new Date();
         let [hours, mins] = document.getElementById("endTime").value.split(":");
         let minutesToEnd = (hours * 60 + mins * 1) - (now.getHours() * 60 + now.getMinutes() * 1);
@@ -113,35 +143,58 @@
         } else {
             document.getElementById("minutesToGoalEnd").innerHTML = "Minutes To Goal Time: " + minutesToEnd;
         }
-        let manMinutes = pl * pd;
+
+        //Calculates manMinutes of work to complete P+S
+        let manMinutes;
+        if(flex){
+            manMinutes = (pl * pd) + (fl * fd);
+        } else { 
+            manMinutes = (pl * pd);
+        }
+        console.log(manMinutes);
         document.getElementById("manMinutes").innerHTML = "Man Minutes Of Work: " + manMinutes;
+        
+        //Calculates how many people are needed to complete the work on time
         let peopleNeeded = Math.ceil(manMinutes / minutesToEnd);
+        console.log(peopleNeeded);
+        //Stops crazy high numbers from being displayed eg. "Minimum Required : 1500"
         if(peopleNeeded > 100) {document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: >100";} else {
             document.getElementById("peopleNeeded").innerHTML = "Minimum Pickers Required: " + peopleNeeded;
         }
+
+        //Caclulates Estimated end time from man minutes left and active picker count.
         let estEndTime = new Date();
         estEndTime.setMinutes(now.getMinutes() + tl);
         estEndTime = new Date(estEndTime);
+
+        //Prevents updating information if Active Pickers has not been filled in as that causes NaN to show
         if(ap < 1) { return };
         document.getElementById("estimatedEndTime").innerHTML = "Estimated End Time: " + hours12(estEndTime) + ":" + pad(estEndTime.getMinutes());
         document.getElementById("timeUpdated").innerHTML = "Last Updated At " + hours12(now) + ":" + pad(now.getMinutes());
     }
 
+    //Converts 24 hour into 12
     function hours12(date) { 
         let hr12 = (date.getHours() + 24) % 12 || 12; 
         return pad(hr12);
     }
 
+    //Pads single digit time to always be double
     function pad(n) {
         return (n < 10) ? '0' + n : n;
     }
 
+    //Hides and shows Flex information
     function flex() {
+        let parent = document.getElementById("flexSettings");
+        document.getElementById("flexBool").checked ? parent.style.display="flex" : parent.style.display="none";
+        calculateTime();
     }
 
     setInterval(calculateTime, 10000);
+    flex();
 
-    // Made by Nicholas Hatchew (nhatchew). Last Updated 02/12/2024
+    // Made by Nicholas Hatchew (nhatchew). Last Updated 02/22/2024
     // Work in progress system to refine pick and stage VTO calculations and Estimated time left
     
 </script>
